@@ -1,0 +1,36 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title or "Asphalt System" }}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@100..900&display=swap" rel="stylesheet">
+
+    <!-- <link rel="shortcut icon" href="/static/img/favicon.ico" type="image/x-icon"> -->
+
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/light.css">
+    <link rel="stylesheet" href="/static/css/media_queries.css">
+    
+    <style>
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status--transit { background: #e3f2fd; color: #1976d2; } /* Синий */
+        .status--idle { background: #f5f5f5; color: #616161; }    /* Серый */
+        .status--loading { background: #fff3e0; color: #f57c00; } /* Оранжевый */
+        .status--alert { background: #ffeae6; color: #ff3b30; }   /* Красный */
+    </style>
+</head>
+<body>
+    {% block content %}{% endblock %}
+</body>
+</html>
