@@ -1,0 +1,184 @@
+version: '3.8'
+
+services:
+  postgres-logistics:
+    image: postgis/postgis:15-3.3
+    container_name: postgres-logistics
+    networks:
+      - asphalt-network
+    ports:
+      - "5432:5432"
+    env_file:
+      - app.env
+      - secrets/db_logistics.env
+    volumes:
+      - postgres-logistics_data:/var/lib/postgresql/data
+      - ./asphalt_logistics/db/init-logistics-db.sql:/docker-entrypoint-initdb.d/init-logistics-db.sql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\" || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres-weather:
+    image: postgis/postgis:15-3.3
+    container_name: postgres-weather
+    networks:
+      - asphalt-network
+    ports:
+      - "5433:5432"
+    env_file:
+      - app.env
+      - secrets/db_weather.env
+    volumes:
+      - postgres-weather_data:/var/lib/postgresql/data
+      - ./asphalt_weather/db/init-weather-db.sql:/docker-entrypoint-initdb.d/init-weather-db.sql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\" || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    container_name: redis-cache
+    networks:
+      - asphalt-network
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  edge-router:
+    container_name: edge-router
+    build: 
+      context: ./asphalt_edge-router
+    networks:
+      - asphalt-network
+    ports:
+      - "8080:8080"
+    env_file:
+      - app.env
+      - secrets/secrets.env
+    volumes:
+      - ./config:/app/app/config
+    depends_on:
+      - logistics
+      - weather
+      - calculator
+
+  logistics:
+    container_name: logistics
+    build:
+      context: ./asphalt_logistics
+    networks:
+      - asphalt-network
+    ports:
+      - "8082:8082"
+    env_file:
+      - app.env
+      - secrets/db_logistics.env
+      - secrets/secrets.env
+    volumes:
+      - ./config:/app/app/config
+    depends_on:
+      postgres-logistics:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  weather:
+    container_name: weather
+    build:
+      context: ./asphalt_weather
+    networks:
+      - asphalt-network
+    ports:
+      - "8083:8083"
+    env_file:
+      - app.env
+      - secrets/db_weather.env
+      - secrets/secrets.env
+    volumes:
+      - ./config:/app/app/config
+    depends_on:
+      postgres-weather:
+        condition: service_healthy
+
+  calculator:
+    container_name: calculator
+    build:
+      context: ./asphalt_calculator
+    networks:
+      - asphalt-network
+    ports:
+      - "8084:8084"
+    env_file:
+      - app.env
+    volumes:
+      - ./config:/app/app/config
+
+  ml:
+    container_name: ml
+    build:
+      context: ./asphalt_ml
+    networks:
+      - asphalt-network
+    ports:
+      - "8085:8085"
+    env_file:
+      - app.env
+    volumes:
+      - ./config:/app/app/config
+    depends_on:
+      - weather
+
+  front-end:
+    container_name: front-end
+    build:
+      context: ./asphalt_front-end
+    networks:
+      - asphalt-network
+    ports:
+      - "8081:8081"
+    env_file:
+      - app.env
+    volumes:
+      - ./config:/app/app/config
+
+  nginx:
+    container_name: nginx
+    build:
+      context: ./asphalt_nginx
+    networks:
+      - asphalt-network
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./asphalt_nginx/conf.d:/etc/nginx/conf.d
+      - ./asphalt_nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - front-end
+      - edge-router
+
+  adminer:
+    container_name: adminer
+    image: adminer:latest
+    networks:
+      - asphalt-network
+    ports:
+      - "8087:8080"
+    restart: "no"
+    depends_on:
+      - postgres-logistics
+      - postgres-weather
+
+volumes:
+  postgres-logistics_data:
+  postgres-weather_data:
+
+networks:
+  asphalt-network:
+    name: asphalt_network
