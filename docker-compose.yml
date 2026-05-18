@@ -16,7 +16,7 @@ services:
       - ./asphalt_logistics/db/init-logistics-db.sql:/docker-entrypoint-initdb.d/init-logistics-db.sql
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\" || exit 1"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -36,7 +36,7 @@ services:
       - ./asphalt_weather/db/init-weather-db.sql:/docker-entrypoint-initdb.d/init-weather-db.sql
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\" || exit 1"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -54,6 +54,8 @@ services:
     container_name: edge-router
     build: 
       context: ./asphalt_edge-router
+      additional_contexts:
+        - common_src=./asphalt_common
     networks:
       - asphalt-network
     ports:
@@ -64,14 +66,17 @@ services:
     volumes:
       - ./config:/app/app/config
     depends_on:
-      - logistics
-      - weather
-      - calculator
+      logistics:
+        condition: service_started
+      weather:
+        condition: service_started
 
   logistics:
     container_name: logistics
-    build:
+    build: 
       context: ./asphalt_logistics
+      additional_contexts:
+        - common_src=./asphalt_common
     networks:
       - asphalt-network
     ports:
@@ -90,8 +95,10 @@ services:
 
   weather:
     container_name: weather
-    build:
+    build: 
       context: ./asphalt_weather
+      # additional_contexts:
+      #   - common_src=./asphalt_common
     networks:
       - asphalt-network
     ports:
@@ -108,8 +115,10 @@ services:
 
   calculator:
     container_name: calculator
-    build:
+    build: 
       context: ./asphalt_calculator
+      # additional_contexts:
+      #   - common_src=./asphalt_common
     networks:
       - asphalt-network
     ports:
@@ -119,24 +128,26 @@ services:
     volumes:
       - ./config:/app/app/config
 
-  ml:
-    container_name: ml
-    build:
-      context: ./asphalt_ml
-    networks:
-      - asphalt-network
-    ports:
-      - "8085:8085"
-    env_file:
-      - app.env
-    volumes:
-      - ./config:/app/app/config
-    depends_on:
-      - weather
+  # ml:
+  #   container_name: ml
+  #   build: 
+  #     context: ./asphalt_ml
+  #     additional_contexts:
+  #       - common_src=./asphalt_common
+  #   networks:
+  #     - asphalt-network
+  #   ports:
+  #     - "8085:8085"
+  #   env_file:
+  #     - app.env
+  #   volumes:
+  #     - ./config:/app/app/config
+  #   depends_on:
+  #     - weather
 
   front-end:
     container_name: front-end
-    build:
+    build: 
       context: ./asphalt_front-end
     networks:
       - asphalt-network
@@ -149,16 +160,14 @@ services:
 
   nginx:
     container_name: nginx
-    build:
+    build: 
       context: ./asphalt_nginx
     networks:
       - asphalt-network
     ports:
       - "80:80"
-      - "443:443"
     volumes:
       - ./asphalt_nginx/conf.d:/etc/nginx/conf.d
-      - ./asphalt_nginx/ssl:/etc/nginx/ssl
     depends_on:
       - front-end
       - edge-router
@@ -170,7 +179,6 @@ services:
       - asphalt-network
     ports:
       - "8087:8080"
-    restart: "no"
     depends_on:
       - postgres-logistics
       - postgres-weather
