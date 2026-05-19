@@ -2,12 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asphalt System | Management</title>
-    
-    <!-- OpenLayers CSS -->
+    <title>Asphalt | Dashboard </title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.3.1/ol.css">
-    <!-- Наш CSS -->
     <link rel="stylesheet" href="/static/css/main.css">
 </head>
 <body>
@@ -17,116 +13,413 @@
 
     <aside class="sidebar">
         <header class="sidebar-header">
-            <h2>Asphalt System</h2>
+            <h2>Asphalt</h2>
         </header>
 
         <div class="sidebar-content">
-            <!-- 1. Управление объектами -->
+            <!-- Кнопки управления -->
             <section class="card">
                 <div class="card-title">Управление объектами</div>
                 <div class="btn-group">
-                    <button class="btn" onclick="ui.add('abz')">Завод</button>
-                    <button class="btn" onclick="ui.add('section')">Участок</button>
-                    <button class="btn" onclick="ui.add('truck')">Техника</button>
+                    <button class="btn" onclick="ui.add('abz')">АБЗ</button>
+                    <button class="btn" onclick="ui.add('section')">УЧАСТОК</button>
+                    <button class="btn" onclick="ui.add('truck')">ТЕХНИКА</button>
                 </div>
             </section>
 
-            <!-- 2. Мониторинг участка -->
-            <section class="card">
-                <div class="card-title">Мониторинг: <span>М-11 Участок №4</span></div>
-                <div class="weather-info">
-                    <div>
-                        <span class="temp">+22°</span>
-                        <div style="font-size: 0.75rem; color: var(--muted); font-weight: 600;">Вероятность дождя: 15%</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="color: var(--danger); font-weight: 800; font-size: 0.8rem;">ОКНО ЗАКРОЕТСЯ</div>
-                        <div style="font-size: 1.1rem; font-weight: 800;">45 МИН</div>
-                    </div>
-                </div>
-                <div class="timeline-container">
-                    <div class="timeline-green"></div>
-                    <div class="timeline-red"></div>
-                </div>
-                <div class="timeline-desc">
-                    <span>СЕЙЧАС</span>
-                    <span>18:00 (ДОЖДЬ)</span>
-                </div>
-            </section>
+            <div id="plants-list"></div>
 
-            <!-- 3. Калькулятор заказа -->
+            <!-- Контейнер для динамических участков из API -->
+            <div id="sections-list"></div>
+
+            <!-- Калькулятор -->
             <section class="card">
-                <div class="card-title">Калькулятор объема</div>
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <input type="number" id="vol" class="btn" style="flex:1; text-align: left; padding-left: 10px; color: var(--navy); border-color: var(--muted);" value="450">
-                    <div style="line-height: 35px; font-weight: 700; font-size: 0.8rem;">ТОНН</div>
-                </div>
-                <div style="background: rgba(37, 180, 246, 0.1); padding: 10px; border-radius: 8px; text-align: center;">
-                    <span style="color: var(--accent); font-weight: 800; font-size: 0.8rem;">✓ УСПЕЕМ ДО ДОЖДЯ</span>
+                <div class="card-title">Калькулятор заказа</div>
+                <input type="number" id="vol" class="btn" style="width:100%; text-align:left; padding-left:15px; margin-bottom:10px;" value="450">
+                <div style="background:rgba(37,180,246,0.1); padding:12px; border-radius:8px; text-align:center;">
+                    <span style="color:var(--accent); font-weight:800; font-size:0.7rem;">✓ РИСКОВ НЕ ОБНАРУЖЕНО</span>
                 </div>
                 <button class="btn-primary">СФОРМИРОВАТЬ ЗАКАЗ</button>
             </section>
 
-            <!-- 4. Активные рейсы -->
+            <!-- Логистика -->
             <section class="card">
-                <div class="card-title">Логистика в реальном времени</div>
-                <div class="truck-card">
-                    <div style="display: flex; justify-content: space-between;">
-                        <span class="truck-id">САМОСВАЛ #045</span>
-                        <span class="temp-val warning">138°C</span>
+                <div class="card-title">Активные рейсы</div>
+                <div id="trucks-container">
+                    <div class="truck-card">
+                        <div style="display:flex; justify-content:space-between; font-weight:700; font-size:0.8rem;">
+                            <span>САМОСВАЛ #045</span>
+                            <span style="color:var(--danger);">138°C</span>
+                        </div>
                     </div>
-                    <div class="truck-meta">ETA: 12 мин | Маршрут: АБЗ-1 → М-11</div>
-                </div>
-                <div class="truck-card" style="border-left-color: var(--muted);">
-                    <div style="display: flex; justify-content: space-between;">
-                        <span class="truck-id">САМОСВАЛ #012</span>
-                        <span class="temp-val">152°C</span>
-                    </div>
-                    <div class="truck-meta">ETA: 5 мин | Маршрут: АБЗ-1 → М-11</div>
-                </div>
-            </section>
-
-            <!-- 5. Техническое обслуживание -->
-            <section class="card">
-                <div class="card-title">Техническое обслуживание</div>
-                <div class="alert-item" style="border: none; padding: 0;">
-                    <span style="color: var(--danger); font-weight: 800; margin-right: 10px;">!</span>
-                    <span style="font-size: 0.75rem; font-weight: 600;">Грузовик №5 — Требуется плановое ТО</span>
                 </div>
             </section>
         </div>
 
         <footer class="sidebar-footer">
             <div class="card-title">События</div>
-            <div class="alert-log">
-                <div class="alert-item">
-                    <span class="alert-time">14:05</span>
-                    <span>Заказ подтвержден на АБЗ-1</span>
-                </div>
-                <div class="alert-item">
-                    <span class="alert-time">13:50</span>
-                    <span style="color: var(--danger); font-weight: 600;">Внимание: Риск остывания смеси (Рейс #045)</span>
-                </div>
-            </div>
+            <div id="event-log"></div>
         </footer>
     </aside>
+</div>
+<div id="section-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-content card">
+        <h3>Новый участок дороги</h3>
+        <input type="text" id="m-name" placeholder="Название (например, М-11 км 45)" class="btn" style="width:100%; margin-bottom:10px; text-align:left;">
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <div>
+                <label>Старт (Широта)</label>
+                <input type="number" id="m-start-lat" step="0.000001" placeholder="55.123" class="btn" style="width:100%;">
+            </div>
+            <div>
+                <label>Старт (Долгота)</label>
+                <input type="number" id="m-start-lon" step="0.000001" placeholder="37.123" class="btn" style="width:100%;">
+            </div>
+            <div>
+                <label>Финиш (Широта)</label>
+                <input type="number" id="m-end-lat" step="0.000001" placeholder="56.123" class="btn" style="width:100%;">
+            </div>
+            <div>
+                <label>Финиш (Долгота)</label>
+                <input type="number" id="m-end-lon" step="0.000001" placeholder="38.123" class="btn" style="width:100%;">
+            </div>
+        </div>
+        
+        <div style="margin-top:20px; display:flex; gap:10px;">
+            <button class="btn-primary" onclick="ui.saveSection()" style="flex:2;">СОХРАНИТЬ</button>
+            <button class="btn" onclick="ui.closeModal()" style="flex:1;">ОТМЕНА</button>
+        </div>
+    </div>
+</div>
+
+<div id="plant-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-content card">
+        <h3>Новый асфальтобетонный завод (АБЗ)</h3>
+        <input type="text" id="p-name" placeholder="Название завода" class="btn" style="width:100%; margin-bottom:10px; text-align:left;">
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+            <div>
+                <label>Произв-ть (т/ч)</label>
+                <input type="number" id="p-capacity" value="160" class="btn" style="width:100%;">
+            </div>
+            <div>
+                <label>Объем бункера (т)</label>
+                <input type="number" id="p-bunker" value="500" class="btn" style="width:100%;">
+            </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <div>
+                <label>Координата (Широта)</label>
+                <input type="number" id="p-lat" step="0.000001" placeholder="55.123" class="btn" style="width:100%;">
+            </div>
+            <div>
+                <label>Координата (Долгота)</label>
+                <input type="number" id="p-lon" step="0.000001" placeholder="37.123" class="btn" style="width:100%;">
+            </div>
+        </div>
+        
+        <div style="margin-top:20px; display:flex; gap:10px;">
+            <button class="btn-primary" onclick="ui.savePlant()" style="flex:2;">СОХРАНИТЬ ЗАВОД</button>
+            <button class="btn" onclick="ui.closePlantModal()" style="flex:1;">ОТМЕНА</button>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/ol@v10.3.1/dist/ol.js"></script>
 <script>
+    const OSRM_URL = "https://router.project-osrm.org/route/v1/driving/";
+
+    const styles = {
+        section: (isActive) => new ol.style.Style({
+            stroke: new ol.style.Stroke({
+                color: isActive ? '#25B4F6' : '#95a5a6',
+                width: 6
+            })
+        }),
+
+        plant: new ol.style.Style({
+            image: new ol.style.Icon({
+                anchor: [0.5, 1],
+                src: '/static/src/img/factory.png',
+                scale: 0.05
+            })
+        }),
+
+        truck: new ol.style.Style({
+            image: new ol.style.Icon({
+                anchor: [0.5, 0.5],
+                src: '/static/src/img/truck.png',
+                scale: 0.05
+            })
+        })
+    };
+
+    const routeSource = new ol.source.Vector();
     const map = new ol.Map({
         target: 'map',
-        layers: [ new ol.layer.Tile({ source: new ol.source.OSM() }) ],
+        layers: [
+            new ol.layer.Tile({
+                source: new ol.source.OSM()
+            }),
+            new ol.layer.Vector({
+                source: routeSource
+            })
+        ],
         view: new ol.View({
-            center: ol.proj.fromLonLat([31.17, 58.52]),
-            zoom: 9
+            center: ol.proj.fromLonLat([37.617, 55.755]),
+            zoom: 6
         })
     });
 
-    const ui = {
-        add: (t) => console.log('Add:', t)
-    };
-</script>
+    const utils = {
+        parseWKT: (wkt) => {
+            if (!wkt || typeof wkt !== 'string') return null;
+            const res = wkt.match(/POINT\s?\(\s?([\d\.]+)\s+([\d\.]+)\s?\)/i);
+            if (!res) return null;
 
+            let val1 = parseFloat(res[1]);
+            let val2 = parseFloat(res[2]);
+
+
+            if (val1 > 50) {
+                return [val2, val1];
+            } else {
+                return [val1, val2];
+            }
+        },
+        fetchRoute: async (start, end) => {
+            try {
+                const query = `${start[0]},${start[1]};${end[0]},${end[1]}?overview=full&geometries=geojson`;
+                const res = await fetch(OSRM_URL + query);
+                const data = await res.json();
+                return data.code === 'Ok' ? data.routes[0].geometry.coordinates : null;
+            } catch (e) {
+                return null;
+            }
+        }
+    };
+
+    const ui = {
+        add: (t) => ui.log(`Добавление: ${t}`),
+        log: (m) => {
+            const log = document.getElementById('event-log');
+            if (log) log.insertAdjacentHTML('afterbegin', `<div class="alert-item"><span class="alert-time">${new Date().toLocaleTimeString()}</span> ${m}</div>`);
+        },
+        renderSection: (s) => {
+            const html = `
+                    <section class="card">
+                        <div class="card-title">${s.name}</div>
+                        <div style="font-size:0.7rem; color:${s.is_active ? 'var(--accent)' : '#95a5a6'}">
+                            СТАТУС: ${s.is_active ? 'В РАБОТЕ' : 'ЗАВЕРШЕН'}
+                        </div>
+                    </section>`;
+            document.getElementById('sections-list').insertAdjacentHTML('beforeend', html);
+        },
+        renderTruck: (t) => {
+            const html = `
+                    <div class="truck-card">
+                        <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+                            <span>${t.plate_number}</span>
+                            <span style="color:var(--accent);">${t.status}</span>
+                        </div>
+                    </div>`;
+            document.getElementById('trucks-container').insertAdjacentHTML('beforeend', html);
+        },
+
+        renderPlant: (p) => {
+            const html = `
+                    <section class="card" style="border-left: 4px solid #2ecc71;">
+                        <div class="card-title">АБЗ: ${p.name}</div>
+                        <div style="font-size:0.7rem; color:#888;">
+                            Мощность: ${p.capacity_per_hour} т/ч | Бункер: ${p.bunker_capacity} т
+                        </div>
+                    </section>`;
+            document.getElementById('plants-list').insertAdjacentHTML('beforeend', html);
+        },
+
+        add: (type) => {
+            if (type === 'section') {
+                document.getElementById('section-modal').style.display = 'flex';
+            } else if (type === 'abz') {
+                document.getElementById('plant-modal').style.display = 'flex';
+            } else {
+                ui.log(`Добавление ${type} пока не реализовано`);
+            }
+        },
+
+        closeModal: () => {
+            document.getElementById('section-modal').style.display = 'none';
+        },
+
+        closePlantModal: () => {
+            document.getElementById('plant-modal').style.display = 'none';
+        },
+
+        savePlant: async () => {
+            const name = document.getElementById('p-name').value;
+            const cap = document.getElementById('p-capacity').value;
+            const bunker = document.getElementById('p-bunker').value;
+            const lat = document.getElementById('p-lat').value;
+            const lon = document.getElementById('p-lon').value;
+
+            if (!name || !lat || !lon) {
+                alert("Название и координаты обязательны!");
+                return;
+            }
+
+            const payload = {
+                name: name,
+                capacity_per_hour: parseFloat(cap),
+                bunker_capacity: parseFloat(bunker),
+                location: `POINT(${lon} ${lat})`
+            };
+
+            try {
+                ui.log("Регистрация АБЗ...");
+                const res = await fetch("/api/v1/plants", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    ui.log(`Завод ${name} успешно добавлен!`);
+                    ui.closePlantModal();
+                    loadData();
+                } else {
+                    const err = await res.json();
+                    ui.log("Ошибка: " + (err.detail || "неизвестная ошибка"));
+                }
+            } catch (e) {
+                ui.log("Ошибка сети: " + e.message);
+            }
+        },
+
+        saveSection: async () => {
+            const name = document.getElementById('m-name').value;
+            const sLat = document.getElementById('m-start-lat').value;
+            const sLon = document.getElementById('m-start-lon').value;
+            const eLat = document.getElementById('m-end-lat').value;
+            const eLon = document.getElementById('m-end-lon').value;
+
+            if (!name || !sLat || !sLon || !eLat || !eLon) {
+                alert("Заполни все поля!");
+                return;
+            }
+
+            const payload = {
+                name: name,
+                start_location: `POINT(${sLon} ${sLat})`,
+                end_location: `POINT(${eLon} ${eLat})`,
+                is_active: true
+            };
+
+            try {
+                ui.log("Отправка данных...");
+                const res = await fetch("/api/v1/sections", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    ui.log(`Участок ${name} успешно добавлен!`);
+                    ui.closeModal();
+                    loadData();
+                } else {
+                    const err = await res.json();
+                    ui.log("Ошибка: " + JSON.stringify(err.detail));
+                }
+            } catch (e) {
+                ui.log("Ошибка сети: " + e.message);
+            }
+        }
+    };
+
+    async function loadData() {
+        ui.log("Система инициализирована. Загрузка данных...");
+        routeSource.clear();
+        document.getElementById('sections-list').innerHTML = '';
+        document.getElementById('trucks-container').innerHTML = '';
+
+        try {
+            const sRes = await fetch("/api/v1/sections");
+            const sData = await sRes.json();
+
+            for (const s of sData.sections || []) {
+                ui.renderSection(s);
+                const start = utils.parseWKT(s.start_location);
+                const end = utils.parseWKT(s.end_location);
+                if (start && end) {
+                    let coords = await utils.fetchRoute(start, end);
+                    if (!coords) coords = [start, end];
+
+                    const feat = new ol.Feature({
+                        geometry: new ol.geom.LineString(coords.map(c => ol.proj.fromLonLat(c)))
+                    });
+                    feat.setStyle(styles.section(s.is_active));
+                    routeSource.addFeature(feat);
+                }
+            }
+
+            const tRes = await fetch("/api/v1/trucks");
+            const tData = await tRes.json();
+
+            tData.trucks?.forEach(t => {
+                ui.renderTruck(t);
+                if (t.current_location) {
+                    const coords = utils.parseWKT(t.current_location);
+                    if (coords) {
+                        const feat = new ol.Feature({
+                            geometry: new ol.geom.Point(ol.proj.fromLonLat(coords))
+                        });
+                        feat.setStyle(styles.truck);
+                        routeSource.addFeature(feat);
+                    }
+                }
+            });
+
+            const pRes = await fetch("/api/v1/plants");
+            const pData = await pRes.json();
+
+            document.getElementById('plants-list').innerHTML = '';
+
+            if (pData.plants) {
+                pData.plants.forEach(p => {
+                    ui.renderPlant(p);
+
+                    const coords = utils.parseWKT(p.location);
+                    if (coords) {
+                        const feat = new ol.Feature({
+                            geometry: new ol.geom.Point(ol.proj.fromLonLat(coords))
+                        });
+                        feat.setStyle(styles.plant);
+                        routeSource.addFeature(feat);
+                        ui.log(`Завод ${p.name} отрисован`);
+                    } else {
+                        console.error("Не удалось распарсить координаты завода:", p.name, p.location);
+                    }
+                });
+            }
+
+            if (routeSource.getFeatures().length > 0) {
+                map.getView().fit(routeSource.getExtent(), {
+                    padding: [50, 50, 50, 420],
+                    duration: 1000
+                });
+            }
+        } catch (err) {
+            ui.log("Ошибка API: " + err.message);
+        }
+    }
+
+    window.onload = loadData;
+</script>
 </body>
 </html>
