@@ -1,11 +1,132 @@
-{% extends "base.html" %}
-
-{% block content %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asphalt System | Management</title>
     
-    <div class="container">
-        <h1>
-            Hello world!
-        </h1>
-    </div>
+    <!-- OpenLayers CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v10.3.1/ol.css">
+    <!-- Наш CSS -->
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
 
-{% endblock %}
+<div class="app-wrapper">
+    <div id="map"></div>
+
+    <aside class="sidebar">
+        <header class="sidebar-header">
+            <h2>Asphalt System</h2>
+        </header>
+
+        <div class="sidebar-content">
+            <!-- 1. Управление объектами -->
+            <section class="card">
+                <div class="card-title">Управление объектами</div>
+                <div class="btn-group">
+                    <button class="btn" onclick="ui.add('abz')">Завод</button>
+                    <button class="btn" onclick="ui.add('section')">Участок</button>
+                    <button class="btn" onclick="ui.add('truck')">Техника</button>
+                </div>
+            </section>
+
+            <!-- 2. Мониторинг участка -->
+            <section class="card">
+                <div class="card-title">Мониторинг: <span>М-11 Участок №4</span></div>
+                <div class="weather-info">
+                    <div>
+                        <span class="temp">+22°</span>
+                        <div style="font-size: 0.75rem; color: var(--muted); font-weight: 600;">Вероятность дождя: 15%</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="color: var(--danger); font-weight: 800; font-size: 0.8rem;">ОКНО ЗАКРОЕТСЯ</div>
+                        <div style="font-size: 1.1rem; font-weight: 800;">45 МИН</div>
+                    </div>
+                </div>
+                <div class="timeline-container">
+                    <div class="timeline-green"></div>
+                    <div class="timeline-red"></div>
+                </div>
+                <div class="timeline-desc">
+                    <span>СЕЙЧАС</span>
+                    <span>18:00 (ДОЖДЬ)</span>
+                </div>
+            </section>
+
+            <!-- 3. Калькулятор заказа -->
+            <section class="card">
+                <div class="card-title">Калькулятор объема</div>
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <input type="number" id="vol" class="btn" style="flex:1; text-align: left; padding-left: 10px; color: var(--navy); border-color: var(--muted);" value="450">
+                    <div style="line-height: 35px; font-weight: 700; font-size: 0.8rem;">ТОНН</div>
+                </div>
+                <div style="background: rgba(37, 180, 246, 0.1); padding: 10px; border-radius: 8px; text-align: center;">
+                    <span style="color: var(--accent); font-weight: 800; font-size: 0.8rem;">✓ УСПЕЕМ ДО ДОЖДЯ</span>
+                </div>
+                <button class="btn-primary">СФОРМИРОВАТЬ ЗАКАЗ</button>
+            </section>
+
+            <!-- 4. Активные рейсы -->
+            <section class="card">
+                <div class="card-title">Логистика в реальном времени</div>
+                <div class="truck-card">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span class="truck-id">САМОСВАЛ #045</span>
+                        <span class="temp-val warning">138°C</span>
+                    </div>
+                    <div class="truck-meta">ETA: 12 мин | Маршрут: АБЗ-1 → М-11</div>
+                </div>
+                <div class="truck-card" style="border-left-color: var(--muted);">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span class="truck-id">САМОСВАЛ #012</span>
+                        <span class="temp-val">152°C</span>
+                    </div>
+                    <div class="truck-meta">ETA: 5 мин | Маршрут: АБЗ-1 → М-11</div>
+                </div>
+            </section>
+
+            <!-- 5. Техническое обслуживание -->
+            <section class="card">
+                <div class="card-title">Техническое обслуживание</div>
+                <div class="alert-item" style="border: none; padding: 0;">
+                    <span style="color: var(--danger); font-weight: 800; margin-right: 10px;">!</span>
+                    <span style="font-size: 0.75rem; font-weight: 600;">Грузовик №5 — Требуется плановое ТО</span>
+                </div>
+            </section>
+        </div>
+
+        <footer class="sidebar-footer">
+            <div class="card-title">События</div>
+            <div class="alert-log">
+                <div class="alert-item">
+                    <span class="alert-time">14:05</span>
+                    <span>Заказ подтвержден на АБЗ-1</span>
+                </div>
+                <div class="alert-item">
+                    <span class="alert-time">13:50</span>
+                    <span style="color: var(--danger); font-weight: 600;">Внимание: Риск остывания смеси (Рейс #045)</span>
+                </div>
+            </div>
+        </footer>
+    </aside>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/ol@v10.3.1/dist/ol.js"></script>
+<script>
+    const map = new ol.Map({
+        target: 'map',
+        layers: [ new ol.layer.Tile({ source: new ol.source.OSM() }) ],
+        view: new ol.View({
+            center: ol.proj.fromLonLat([31.17, 58.52]),
+            zoom: 9
+        })
+    });
+
+    const ui = {
+        add: (t) => console.log('Add:', t)
+    };
+</script>
+
+</body>
+</html>

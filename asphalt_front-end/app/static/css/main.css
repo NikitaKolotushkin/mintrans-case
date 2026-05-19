@@ -1,0 +1,217 @@
+/* Подключаем шрифт Montserrat */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+    --navy: #0D1F3B;      /* Основной темный */
+    --light-bg: #F5F7FB;  /* Фон */
+    --muted: #87939A;     /* Вспомогательный текст */
+    --accent: #25B4F6;    /* Кнопки и акценты */
+    --danger: #E63739;    /* Алерты и ошибки */
+    --white: #ffffff;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Montserrat', sans-serif; /* Применяем Montserrat */
+    overflow: hidden;
+    background-color: var(--light-bg);
+    color: var(--navy);
+}
+
+.app-wrapper {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+/* КАРТА */
+#map {
+    flex: 1;
+    height: 100%;
+    background: #e0e5eb; /* Цвет до загрузки тайлов */
+}
+
+/* САЙДБАР */
+.sidebar {
+    width: 400px;
+    height: 100%;
+    background: var(--light-bg);
+    border-left: 1px solid rgba(135, 147, 154, 0.2);
+    display: flex;
+    flex-direction: column;
+    box-shadow: -4px 0 15px rgba(13, 31, 59, 0.05);
+    z-index: 100;
+}
+
+.sidebar-header {
+    padding: 20px;
+    background: var(--navy);
+    color: var(--white);
+}
+
+.sidebar-header h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+/* КАРТОЧКИ */
+.card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(135, 147, 154, 0.1);
+    box-shadow: 0 4px 6px rgba(13, 31, 59, 0.02);
+}
+
+.card-title {
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    margin-bottom: 15px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* КНОПКИ */
+.btn-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+}
+
+.btn {
+    padding: 10px 5px;
+    border: 1.5px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    background: var(--accent);
+    color: var(--white);
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: var(--white);
+    width: 100%;
+    border: none;
+    margin-top: 10px;
+    font-size: 0.8rem;
+    padding: 12px;
+}
+
+.btn-primary:hover {
+    background: #1da1dc;
+    transform: translateY(-1px);
+}
+
+/* МОНИТОРИНГ И ТАЙМЛАЙН */
+.weather-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.temp {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--navy);
+}
+
+.timeline-container {
+    height: 12px;
+    background: #e9ecef;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    margin: 15px 0 5px 0;
+}
+
+.timeline-green {
+    position: absolute;
+    left: 0; top: 0; height: 100%;
+    width: 65%;
+    background: var(--accent); /* Зеленое окно теперь акцентное голубое */
+}
+
+.timeline-red {
+    position: absolute;
+    right: 0; top: 0; height: 100%;
+    width: 35%;
+    background: var(--danger);
+}
+
+.timeline-desc {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+}
+
+/* ЛОГИСТИКА */
+.truck-card {
+    background: var(--light-bg);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-left: 4px solid var(--accent);
+}
+
+.truck-id { font-weight: 700; color: var(--navy); }
+.truck-meta { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+.temp-val { font-weight: 800; }
+.temp-val.warning { color: var(--danger); }
+
+/* ФУТЕР И АЛЕРТЫ */
+.sidebar-footer {
+    padding: 15px 20px;
+    background: var(--white);
+    border-top: 1px solid rgba(135, 147, 154, 0.2);
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.alert-item {
+    font-size: 0.7rem;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--light-bg);
+    display: flex;
+    align-items: flex-start;
+}
+
+.alert-time {
+    font-weight: 700;
+    color: var(--accent);
+    margin-right: 10px;
+}
+
+/* Кастомный скроллбар для сайдбара */
+.sidebar-content::-webkit-scrollbar { width: 4px; }
+.sidebar-content::-webkit-scrollbar-track { background: var(--light-bg); }
+.sidebar-content::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 10px; }

@@ -17,9 +17,8 @@ async def get_front_end_service():
 
 
 # @router.get('/favicon.ico', include_in_schema=False)
-# async def favicon():
-#     """Отдача иконки сайта"""
-#     return FileResponse('app/static/img/favicon.ico')
+# async def favicon(request: Request, service: FrontEndService = Depends(get_front_end_service)):
+#     return FileResponse('app/static/src/img/favicon.svg')
 
 
 @router.get('/', response_class=HTMLResponse)
