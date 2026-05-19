@@ -60,9 +60,8 @@ class SectionModel(Base):
     __tablename__ = "sections"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(150), nullable=False)
-    km_start = Column(Integer, nullable=False)
-    km_end = Column(Integer, nullable=False)
-    center_location = Column(Geometry('POINT', srid=4326), nullable=False)
+    start_location = Column(Geometry('POINT', srid=4326), nullable=False)
+    end_location = Column(Geometry('POINT', srid=4326), nullable=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, server_default=func.now())
 

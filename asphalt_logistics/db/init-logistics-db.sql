@@ -34,12 +34,14 @@ CREATE TABLE plants (
 CREATE TABLE sections (
     id SERIAL PRIMARY KEY,
     name VARCHAR(150) NOT NULL,
-    km_start INT NOT NULL,
-    km_end INT NOT NULL,
-    center_location GEOMETRY(Point, 4326) NOT NULL,
+    start_location GEOMETRY(Point, 4326) NOT NULL,
+    end_location GEOMETRY(Point, 4326) NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX idx_sections_start_loc ON sections USING GIST (start_location);
+CREATE INDEX idx_sections_end_loc ON sections USING GIST (end_location);
 
 CREATE TABLE trucks (
     id SERIAL PRIMARY KEY,

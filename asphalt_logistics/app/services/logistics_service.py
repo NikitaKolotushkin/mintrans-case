@@ -61,15 +61,14 @@ class LogisticsService:
             
         return schemas.plant.PlantResponse(**plant)
 
-    # SECTIONS 
+    # --- SECTIONS ---
 
     async def create_section(self, section_data: schemas.section.SectionCreate) -> schemas.section.SectionResponse:
-        """Добавить новый ремонтируемый участок"""
+        """Добавить новый участок по координатам начала и конца"""
         new_section = SectionModel(
             name=section_data.name,
-            km_start=section_data.km_start,
-            km_end=section_data.km_end,
-            center_location=ST_GeomFromText(section_data.center_location, 4326),
+            start_location=ST_GeomFromText(section_data.start_location, 4326),
+            end_location=ST_GeomFromText(section_data.end_location, 4326),
             is_active=section_data.is_active
         )
         self.session.add(new_section)
@@ -79,12 +78,15 @@ class LogisticsService:
         return await self.get_section_by_id(new_section.id)
 
     async def get_all_sections(self, is_active: bool = True) -> schemas.section.SectionListResponse:
-        """Получить список участков с фильтрацией"""
+        """Получить все участки с координатами"""
         result = await self.session.execute(
             select(
-                SectionModel.id, SectionModel.name, SectionModel.km_start,
-                SectionModel.km_end, ST_AsText(SectionModel.center_location).label('center_location'),
-                SectionModel.is_active, SectionModel.created_at
+                SectionModel.id, 
+                SectionModel.name, 
+                ST_AsText(SectionModel.start_location).label('start_location'),
+                ST_AsText(SectionModel.end_location).label('end_location'),
+                SectionModel.is_active, 
+                SectionModel.created_at
             ).where(SectionModel.is_active == is_active)
         )
         sections = result.mappings().all()
@@ -97,9 +99,12 @@ class LogisticsService:
         """Получить участок по ID"""
         result = await self.session.execute(
             select(
-                SectionModel.id, SectionModel.name, SectionModel.km_start,
-                SectionModel.km_end, ST_AsText(SectionModel.center_location).label('center_location'),
-                SectionModel.is_active, SectionModel.created_at
+                SectionModel.id, 
+                SectionModel.name, 
+                ST_AsText(SectionModel.start_location).label('start_location'),
+                ST_AsText(SectionModel.end_location).label('end_location'),
+                SectionModel.is_active, 
+                SectionModel.created_at
             ).where(SectionModel.id == section_id)
         )
         section = result.mappings().one_or_none()
