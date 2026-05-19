@@ -13,6 +13,7 @@ from .maintenance import (
     MaintenanceTaskResponse, 
     MaintenanceTaskListResponse
 )
+from .ml import PredictRequest, HourlyForecast, PredictResponse
 
 __all__ = [
     "TruckStatus", "OrderStatus", "OrderType",
@@ -22,5 +23,6 @@ __all__ = [
     "OrderBase", "OrderCreate", "OrderResponse", "OrderListResponse",
     "TripBase", "TripCreate", "TripResponse", "TripListResponse",
     "MaintenanceTaskBase", "MaintenanceTaskCreate", 
-    "MaintenanceTaskResponse", "MaintenanceTaskListResponse"
+    "MaintenanceTaskResponse", "MaintenanceTaskListResponse",
+    "PredictRequest", "HourlyForecast", "PredictResponse"
 ]
