@@ -128,22 +128,22 @@ services:
     volumes:
       - ./config:/app/app/config
 
-  # ml:
-  #   container_name: ml
-  #   build: 
-  #     context: ./asphalt_ml
-  #     additional_contexts:
-  #       - common_src=./asphalt_common
-  #   networks:
-  #     - asphalt-network
-  #   ports:
-  #     - "8085:8085"
-  #   env_file:
-  #     - app.env
-  #   volumes:
-  #     - ./config:/app/app/config
-  #   depends_on:
-  #     - weather
+  ml:
+    container_name: ml
+    build: 
+      context: ./asphalt_ml
+      additional_contexts:
+        - common_src=./asphalt_common
+    networks:
+      - asphalt-network
+    ports:
+      - "8085:8085"
+    env_file:
+      - app.env
+    volumes:
+      - ./config:/app/app/config
+    depends_on:
+      - weather
 
   front-end:
     container_name: front-end
