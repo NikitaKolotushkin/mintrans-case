@@ -24,3 +24,16 @@ class OrderResponse(OrderCreate):
 
 class OrderListResponse(BaseModel):
     orders: List[OrderResponse]
+
+class CalculateOrderRequest(BaseModel):
+    section_id: int
+    volume: float
+
+class CalculateOrderResponse(BaseModel):
+    is_possible: bool
+    reason: Optional[str] = None
+    optimal_plant_id: Optional[int] = None
+    optimal_plant_name: Optional[str] = None
+    arrival_temp: Optional[float] = None
+    travel_time_min: Optional[int] = None
+    green_window: Optional[str] = None

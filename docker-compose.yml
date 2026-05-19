@@ -11,15 +11,18 @@ services:
     env_file:
       - app.env
       - secrets/db_logistics.env
+    environment:
+      - POSTGRES_DB=asphalt_logistics
     volumes:
       - postgres-logistics_data:/var/lib/postgresql/data
       - ./asphalt_logistics/db/init-logistics-db.sql:/docker-entrypoint-initdb.d/init-logistics-db.sql
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U admin"] 
+      interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   postgres-weather:
     image: postgis/postgis:15-3.3
@@ -117,8 +120,8 @@ services:
     container_name: calculator
     build: 
       context: ./asphalt_calculator
-      # additional_contexts:
-      #   - common_src=./asphalt_common
+      additional_contexts:
+        - common_src=./asphalt_common
     networks:
       - asphalt-network
     ports:

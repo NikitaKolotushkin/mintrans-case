@@ -5,7 +5,7 @@ from .enums import TruckStatus, OrderStatus, OrderType
 from .plant import PlantBase, PlantCreate, PlantResponse, PlantListResponse
 from .section import SectionBase, SectionCreate, SectionResponse, SectionListResponse
 from .truck import TruckBase, TruckCreate, TruckResponse, TruckListResponse
-from .order import OrderBase, OrderCreate, OrderResponse, OrderListResponse
+from .order import OrderBase, OrderCreate, OrderResponse, OrderListResponse, CalculateOrderRequest, CalculateOrderResponse
 from .trip import TripBase, TripCreate, TripResponse, TripListResponse
 from .maintenance import (
     MaintenanceTaskBase, 
@@ -20,7 +20,7 @@ __all__ = [
     "PlantBase", "PlantCreate", "PlantResponse", "PlantListResponse",
     "SectionBase", "SectionCreate", "SectionResponse", "SectionListResponse",
     "TruckBase", "TruckCreate", "TruckResponse", "TruckListResponse",
-    "OrderBase", "OrderCreate", "OrderResponse", "OrderListResponse",
+    "OrderBase", "OrderCreate", "OrderResponse", "OrderListResponse", "CalculateOrderRequest", "CalculateOrderResponse",
     "TripBase", "TripCreate", "TripResponse", "TripListResponse",
     "MaintenanceTaskBase", "MaintenanceTaskCreate", 
     "MaintenanceTaskResponse", "MaintenanceTaskListResponse",

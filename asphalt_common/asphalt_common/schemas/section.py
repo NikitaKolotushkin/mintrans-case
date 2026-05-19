@@ -7,15 +7,14 @@ from typing import List
 
 class SectionBase(BaseModel):
     name: str
-    km_start: int
-    km_end: int
-    center_location: str = Field(description="Геометрия Point (WKT или GeoJSON)")
+    start_location: str = Field(description="WKT Point начала участка (например, POINT(37.6 55.7))")
+    end_location: str = Field(description="WKT Point конца участка")
     is_active: bool = True
 
 class SectionCreate(SectionBase):
     pass
 
-class SectionResponse(SectionCreate):
+class SectionResponse(SectionBase):
     id: int
     created_at: datetime
 

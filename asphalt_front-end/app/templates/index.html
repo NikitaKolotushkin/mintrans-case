@@ -34,12 +34,20 @@
 
             <!-- Калькулятор -->
             <section class="card">
-                <div class="card-title">Калькулятор заказа</div>
-                <input type="number" id="vol" class="btn" style="width:100%; text-align:left; padding-left:15px; margin-bottom:10px;" value="450">
-                <div style="background:rgba(37,180,246,0.1); padding:12px; border-radius:8px; text-align:center;">
-                    <span style="color:var(--accent); font-weight:800; font-size:0.7rem;">✓ РИСКОВ НЕ ОБНАРУЖЕНО</span>
+                <div class="card-title">Автоматический подбор АБЗ</div>
+                
+                <!-- Выбор участка -->
+                <select id="calc-section" class="btn" style="width:100%; margin-bottom:10px; text-align:left;">
+                    <option value="">Выберите участок...</option>
+                </select>
+                
+                <input type="number" id="calc-vol" class="btn" style="width:100%; text-align:left; padding-left:15px; margin-bottom:10px;" placeholder="Объем (тонн)" value="450">
+                
+                <div id="calc-result" style="display:none; background:rgba(37,180,246,0.1); padding:12px; border-radius:8px; text-align:center; margin-bottom:10px;">
+                    <!-- Сюда вставим результат -->
                 </div>
-                <button class="btn-primary">СФОРМИРОВАТЬ ЗАКАЗ</button>
+                
+                <button class="btn-primary" onclick="ui.calculateOrder()">НАЙТИ ЗЕЛЕНОЕ ОКНО</button>
             </section>
 
             <!-- Логистика -->
@@ -131,6 +139,10 @@
 <script>
     const OSRM_URL = "https://router.project-osrm.org/route/v1/driving/";
 
+    let globalPlants = [];
+    let globalSections = [];
+    let lastRouteCoords = null;
+
     const styles = {
         section: (isActive) => new ol.style.Style({
             stroke: new ol.style.Stroke({
@@ -209,33 +221,33 @@
         },
         renderSection: (s) => {
             const html = `
-                    <section class="card">
-                        <div class="card-title">${s.name}</div>
-                        <div style="font-size:0.7rem; color:${s.is_active ? 'var(--accent)' : '#95a5a6'}">
-                            СТАТУС: ${s.is_active ? 'В РАБОТЕ' : 'ЗАВЕРШЕН'}
-                        </div>
-                    </section>`;
+                        <section class="card">
+                            <div class="card-title">${s.name}</div>
+                            <div style="font-size:0.7rem; color:${s.is_active ? 'var(--accent)' : '#95a5a6'}">
+                                СТАТУС: ${s.is_active ? 'В РАБОТЕ' : 'ЗАВЕРШЕН'}
+                            </div>
+                        </section>`;
             document.getElementById('sections-list').insertAdjacentHTML('beforeend', html);
         },
         renderTruck: (t) => {
             const html = `
-                    <div class="truck-card">
-                        <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
-                            <span>${t.plate_number}</span>
-                            <span style="color:var(--accent);">${t.status}</span>
-                        </div>
-                    </div>`;
+                        <div class="truck-card">
+                            <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+                                <span>${t.plate_number}</span>
+                                <span style="color:var(--accent);">${t.status}</span>
+                            </div>
+                        </div>`;
             document.getElementById('trucks-container').insertAdjacentHTML('beforeend', html);
         },
 
         renderPlant: (p) => {
             const html = `
-                    <section class="card" style="border-left: 4px solid #2ecc71;">
-                        <div class="card-title">АБЗ: ${p.name}</div>
-                        <div style="font-size:0.7rem; color:#888;">
-                            Мощность: ${p.capacity_per_hour} т/ч | Бункер: ${p.bunker_capacity} т
-                        </div>
-                    </section>`;
+                        <section class="card" style="border-left: 4px solid #2ecc71;">
+                            <div class="card-title">АБЗ: ${p.name}</div>
+                            <div style="font-size:0.7rem; color:#888;">
+                                Мощность: ${p.capacity_per_hour} т/ч | Бункер: ${p.bunker_capacity} т
+                            </div>
+                        </section>`;
             document.getElementById('plants-list').insertAdjacentHTML('beforeend', html);
         },
 
@@ -339,6 +351,221 @@
             } catch (e) {
                 ui.log("Ошибка сети: " + e.message);
             }
+        },
+
+        calculateOrder: async () => {
+            const sectionId = document.getElementById('calc-section').value;
+            const volume = document.getElementById('calc-vol').value;
+            const resultDiv = document.getElementById('calc-result');
+
+            if (!sectionId) {
+                alert("Выберите участок!");
+                return;
+            }
+
+            ui.log("Запуск расчета логистики...");
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '⏳ Считаю оптимальный маршрут...';
+            resultDiv.style.background = 'rgba(255,255,255,0.1)';
+
+            try {
+                const res = await fetch(`/api/v1/calculate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        section_id: parseInt(sectionId), // Убеждаемся, что это число
+                        volume: parseFloat(volume) // Убеждаемся, что это число
+                    })
+                });
+                const data = await res.json();
+
+                if (data.is_possible) {
+                    // 1. Выводим текст
+                    resultDiv.style.background = 'rgba(46, 204, 113, 0.2)';
+                    resultDiv.innerHTML = `
+                        <div style="color:#2ecc71; font-weight:bold; margin-bottom:5px;">МОЖНО ВЕЗТИ</div>
+                        <div style="font-size:0.9rem;">
+                            Завод: <b>${data.optimal_plant_name}</b><br>
+                            Температура: <b style="font-size:1.1rem;">${data.arrival_temp}°C</b><br>
+                            Путь: ${data.travel_time_min} мин 
+                        </div>
+                    `;
+                    ui.log(`Успех: ${data.optimal_plant_name} подходит (${data.arrival_temp}°C)`);
+
+                    // 2. Отрисовываем маршрут на карте
+                    await ui.drawDeliveryRoute(sectionId, data.optimal_plant_id);
+
+                } else {
+                    // Выводим причину отказа
+                    resultDiv.style.background = 'rgba(231, 76, 60, 0.2)';
+                    resultDiv.innerHTML = `
+                        <div style="color:#e74c3c; font-weight:bold;">НЕВОЗМОЖНО</div>
+                        <div style="font-size:0.8rem;">${data.reason}</div>
+                    `;
+                    ui.log("Расчет: доставка невозможна.");
+                }
+            } catch (e) {
+                ui.log("Ошибка калькулятора: " + e.message);
+                resultDiv.innerHTML = "Ошибка связи с сервером";
+            }
+        },
+
+        // Метод для отрисовки конкретного маршрута доставки
+        drawDeliveryRoute: async (sectionId, plantId) => {
+            // Находим данные участка и завода в DOM и глобальных переменных
+            const sectionSelect = document.getElementById('calc-section');
+            const plant = globalPlants.find(p => p.id === plantId);
+
+            // Нам нужны координаты участка (возьмем из API или найдем в текущем списке)
+            const sRes = await fetch("/api/v1/sections");
+            const sData = await sRes.json();
+            const section = sData.sections.find(s => s.id == sectionId);
+
+            if (!plant || !section) return;
+
+            const startCoords = utils.parseWKT(plant.location);
+            const endCoords = utils.parseWKT(section.start_location);
+
+            const routeCoords = await utils.fetchRoute(startCoords, endCoords);
+            if (routeCoords) {
+                // Очищаем старые маршруты "доставки" (можно создать отдельный слой под них)
+                // Но для простоты добавим как яркую синюю линию
+                const routeFeature = new ol.Feature({
+                    geometry: new ol.geom.LineString(routeCoords.map(c => ol.proj.fromLonLat(c)))
+                });
+
+                routeFeature.setStyle(new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: '#f1c40f', // Золотой цвет для активного маршрута
+                        width: 8,
+                        lineDash: [1, 12] // Пунктир для красоты
+                    })
+                }));
+
+                routeSource.addFeature(routeFeature);
+
+                // Приближаем камеру к маршруту
+                map.getView().fit(routeFeature.getGeometry().getExtent(), {
+                    padding: [100, 100, 100, 450],
+                    duration: 1000
+                });
+            }
+        },
+        calculateOrder: async () => {
+            const sectionId = document.getElementById('calc-section').value;
+            const volume = document.getElementById('calc-vol').value;
+            const resultDiv = document.getElementById('calc-result');
+
+            if (!sectionId) return alert("Выберите участок!");
+
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '⏳ Подбор логистики...';
+
+            try {
+                const res = await fetch(`/api/v1/calculate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        section_id: parseInt(sectionId),
+                        volume: parseFloat(volume)
+                    })
+                });
+                const data = await res.json();
+
+                if (data.is_possible) {
+                    // Сохраняем данные для анимации
+                    const plant = globalPlants.find(p => p.id === data.optimal_plant_id);
+                    const sRes = await fetch("/api/v1/sections");
+                    const sData = await sRes.json();
+                    const section = sData.sections.find(s => s.id == sectionId);
+
+                    // Получаем координаты маршрута для отрисовки и анимации
+                    lastRouteCoords = await utils.fetchRoute(
+                        utils.parseWKT(plant.location),
+                        utils.parseWKT(section.start_location)
+                    );
+
+                    if (lastRouteCoords) {
+                        ui.drawStaticRoute(lastRouteCoords);
+                    }
+
+                    resultDiv.style.background = 'rgba(46, 204, 113, 0.2)';
+                    resultDiv.innerHTML = `
+                        <div style="color:#2ecc71; font-weight:bold; margin-bottom:5px;">МОЖНО ВЕЗТИ</div>
+                        <div style="font-size:0.85rem; margin-bottom:10px; text-align:left;">
+                            Завод: <b>${data.optimal_plant_name}</b><br>
+                            Температура: <b>${data.arrival_temp}°C</b><br>
+                            Путь: <b>${data.travel_time_min} мин</b> (${data.distance_km || '—'} км)
+                        </div>
+                        <button class="btn-primary" style="width:100%;" onclick="ui.startTruckAnimation()">ОТПРАВИТЬ РЕЙС</button>
+                    `;
+                } else {
+                    resultDiv.style.background = 'rgba(231, 76, 60, 0.2)';
+                    resultDiv.innerHTML = `<div style="color:#e74c3c;">${data.reason}</div>`;
+                }
+            } catch (e) {
+                ui.log("Ошибка: " + e.message);
+            }
+        },
+
+        // Отрисовка линии маршрута (пунктир)
+        drawStaticRoute: (coords) => {
+            const line = new ol.geom.LineString(coords.map(c => ol.proj.fromLonLat(c)));
+            const feature = new ol.Feature({
+                geometry: line
+            });
+            feature.setStyle(new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: '#f1c40f',
+                    width: 4,
+                    lineDash: [1, 10]
+                })
+            }));
+            routeSource.addFeature(feature);
+            map.getView().fit(line.getExtent(), {
+                padding: [50, 50, 50, 450],
+                duration: 1000
+            });
+        },
+
+        // АНИМАЦИЯ ГРУЗОВИКА
+        startTruckAnimation: () => {
+            if (!lastRouteCoords) return;
+
+            ui.log("Грузовик выехал с АБЗ...");
+
+            const line = new ol.geom.LineString(lastRouteCoords.map(c => ol.proj.fromLonLat(c)));
+            const truckFeature = new ol.Feature({
+                geometry: new ol.geom.Point(line.getFirstCoordinate())
+            });
+            truckFeature.setStyle(styles.truck);
+            routeSource.addFeature(truckFeature);
+
+            let progress = 0;
+            const speed = 0.003; // Скорость движения
+
+            function animate() {
+                progress += speed;
+                if (progress <= 1) {
+                    const currentPoint = line.getCoordinateAt(progress);
+                    truckFeature.getGeometry().setCoordinates(currentPoint);
+
+                    // Поворот кабины по вектору движения
+                    const nextPoint = line.getCoordinateAt(Math.min(progress + 0.01, 1));
+                    const rotation = Math.atan2(nextPoint[1] - currentPoint[1], nextPoint[0] - currentPoint[0]);
+                    truckFeature.getStyle().getImage().setRotation(-rotation + Math.PI / 2);
+
+                    requestAnimationFrame(animate);
+                } else {
+                    ui.log("Грузовик прибыл! Начинаем укладку.");
+                    setTimeout(() => routeSource.removeFeature(truckFeature), 2000);
+                }
+            }
+            animate();
         }
     };
 
@@ -351,6 +578,9 @@
         try {
             const sRes = await fetch("/api/v1/sections");
             const sData = await sRes.json();
+
+            const select = document.getElementById('calc-section');
+            select.innerHTML = '<option value="">Выберите участок...</option>';
 
             for (const s of sData.sections || []) {
                 ui.renderSection(s);
@@ -366,6 +596,7 @@
                     feat.setStyle(styles.section(s.is_active));
                     routeSource.addFeature(feat);
                 }
+                select.insertAdjacentHTML('beforeend', `<option value="${s.id}">${s.name}</option>`);
             }
 
             const tRes = await fetch("/api/v1/trucks");
@@ -391,6 +622,8 @@
             document.getElementById('plants-list').innerHTML = '';
 
             if (pData.plants) {
+                globalPlants = pData.plants; 
+
                 pData.plants.forEach(p => {
                     ui.renderPlant(p);
 
@@ -404,6 +637,23 @@
                         ui.log(`Завод ${p.name} отрисован`);
                     } else {
                         console.error("Не удалось распарсить координаты завода:", p.name, p.location);
+                    }
+                });
+            }
+
+            if (pData.plants) {
+                globalPlants = pData.plants; 
+
+                pData.plants.forEach(p => {
+                    ui.renderPlant(p);
+                    // ... остальной код отрисовки на карте ...
+                    const coords = utils.parseWKT(p.location);
+                    if (coords) {
+                        const feat = new ol.Feature({
+                            geometry: new ol.geom.Point(ol.proj.fromLonLat(coords))
+                        });
+                        feat.setStyle(styles.plant);
+                        routeSource.addFeature(feat);
                     }
                 });
             }
